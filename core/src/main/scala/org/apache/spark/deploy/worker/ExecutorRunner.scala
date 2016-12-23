@@ -129,6 +129,8 @@ private[deploy] class ExecutorRunner(
       val builder = CommandUtils.buildProcessBuilder(appDesc.command, new SecurityManager(conf),
         memory, sparkHome.getAbsolutePath, substituteVariables)
       val command = builder.command()
+      command.add(0, "numactl")
+      command.add(1, "--interleave=all")
       logInfo("Launch command: " + command.mkString("\"", "\" \"", "\""))
 
       builder.directory(executorDir)
