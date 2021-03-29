@@ -103,17 +103,18 @@ public class JavaUtils {
   public static void deleteRecursively(File file, FilenameFilter filter) throws IOException {
     if (file == null) { return; }
 
+    // On graphene system, this operation will fork a new process and cost too much time.
     // On Unix systems, use operating system command to run faster
     // If that does not work out, fallback to the Java IO way
-    if (SystemUtils.IS_OS_UNIX && filter == null) {
-      try {
-        deleteRecursivelyUsingUnixNative(file);
-        return;
-      } catch (IOException e) {
-        logger.warn("Attempt to delete using native Unix OS command failed for path = {}. " +
-                        "Falling back to Java IO way", file.getAbsolutePath(), e);
-      }
-    }
+//    if (SystemUtils.IS_OS_UNIX && filter == null) {
+//      try {
+//        deleteRecursivelyUsingUnixNative(file);
+//        return;
+//      } catch (IOException e) {
+//        logger.warn("Attempt to delete using native Unix OS command failed for path = {}. " +
+//                        "Falling back to Java IO way", file.getAbsolutePath(), e);
+//      }
+//    }
 
     deleteRecursivelyUsingJavaIO(file, filter);
   }
