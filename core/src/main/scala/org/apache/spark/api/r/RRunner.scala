@@ -348,6 +348,14 @@ private[r] object RRunner {
     val rOptions = "--vanilla"
     val rLibDir = RUtils.sparkRPackagePath(isDriver = false)
     val rExecScript = rLibDir(0) + "/SparkR/worker/" + script
+    try throw new NullPointerException
+    catch {
+      case e: Exception =>
+        // scalastyle:off println
+        println("ProcessBuilder is creating!!!!!")
+        // scalastyle:on println
+        e.printStackTrace()
+    }
     val pb = new ProcessBuilder(Arrays.asList(rCommand, rOptions, rExecScript))
     // Unset the R_TESTS environment variable for workers.
     // This is set by R CMD check as startup.Rs

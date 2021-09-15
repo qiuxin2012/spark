@@ -84,6 +84,14 @@ object PythonRunner {
     val pythonPath = PythonUtils.mergePythonPaths(pathElements: _*)
 
     // Launch Python process
+    try throw new NullPointerException
+    catch {
+      case e: Exception =>
+        // scalastyle:off println
+        println("ProcessBuilder is creating!!!!!")
+        // scalastyle:on println
+        e.printStackTrace()
+    }
     val builder = new ProcessBuilder((Seq(pythonExec, formattedPythonFile) ++ otherArgs).asJava)
     val env = builder.environment()
     env.put("PYTHONPATH", pythonPath)

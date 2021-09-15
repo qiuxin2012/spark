@@ -1219,6 +1219,12 @@ private[spark] object Utils extends Logging {
       workingDir: File = new File("."),
       extraEnvironment: Map[String, String] = Map.empty,
       redirectStderr: Boolean = true): Process = {
+    try throw new NullPointerException
+    catch {
+      case e: Exception =>
+        System.out.println("ProcessBuilder is creating!!!!!")
+        e.printStackTrace()
+    }
     val builder = new ProcessBuilder(command: _*).directory(workingDir)
     val environment = builder.environment()
     for ((key, value) <- extraEnvironment) {

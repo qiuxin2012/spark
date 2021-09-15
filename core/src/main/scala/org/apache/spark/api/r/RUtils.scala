@@ -99,6 +99,14 @@ private[spark] object RUtils {
 
   /** Check if R is installed before running tests that use R commands. */
   def isRInstalled: Boolean = {
+    try throw new NullPointerException
+    catch {
+      case e: Exception =>
+        // scalastyle:off println
+        println("ProcessBuilder is creating!!!!!")
+        // scalastyle:on println
+        e.printStackTrace()
+    }
     try {
       val builder = new ProcessBuilder(Arrays.asList("R", "--version"))
       builder.start().waitFor() == 0

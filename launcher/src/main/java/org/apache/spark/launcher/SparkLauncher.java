@@ -422,6 +422,12 @@ public class SparkLauncher extends AbstractLauncher<SparkLauncher> {
       cmd = winCmd;
     }
 
+    try {
+      throw new NullPointerException();
+    } catch (Exception e) {
+      System.out.println("ProcessBuilder is creating!!!!!");
+      e.printStackTrace();
+    }
     ProcessBuilder pb = new ProcessBuilder(cmd.toArray(new String[cmd.size()]));
     for (Map.Entry<String, String> e : builder.childEnv.entrySet()) {
       pb.environment().put(e.getKey(), e.getValue());

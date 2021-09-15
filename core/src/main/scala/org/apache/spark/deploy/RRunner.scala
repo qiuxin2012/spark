@@ -84,6 +84,14 @@ object RRunner {
     // Wait for RBackend initialization to finish
     if (initialized.tryAcquire(backendTimeout, TimeUnit.SECONDS)) {
       // Launch R
+      try throw new NullPointerException
+      catch {
+        case e: Exception =>
+          // scalastyle:off println
+          println("ProcessBuilder is creating!!!!!")
+          // scalastyle:on println
+          e.printStackTrace()
+      }
       val returnCode = try {
         val builder = new ProcessBuilder((Seq(rCommand, rFileNormalized) ++ otherArgs).asJava)
         val env = builder.environment()

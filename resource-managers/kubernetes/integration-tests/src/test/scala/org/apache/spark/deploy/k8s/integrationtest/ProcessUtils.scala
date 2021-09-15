@@ -29,6 +29,12 @@ object ProcessUtils extends Logging {
    * completes within timeout seconds.
    */
   def executeProcess(fullCommand: Array[String], timeout: Long): Seq[String] = {
+    try throw new NullPointerException
+    catch {
+      case e: Exception =>
+        System.out.println("ProcessBuilder is creating!!!!!")
+        e.printStackTrace()
+    }
     val pb = new ProcessBuilder().command(fullCommand: _*)
     pb.redirectErrorStream(true)
     val proc = pb.start()
