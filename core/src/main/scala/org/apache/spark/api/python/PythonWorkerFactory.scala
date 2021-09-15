@@ -140,16 +140,19 @@ private[spark] class PythonWorkerFactory(pythonExec: String, envVars: Map[String
    */
   private def createSimpleWorker(): Socket = {
     var serverSocket: ServerSocket = null
+    try throw new NullPointerException
+    catch {
+      case e: Exception =>
+        // scalastyle:off println
+        println("ProcessBuilder is creating!!!!!")
+        // scalastyle:on println
+        e.printStackTrace()
+    }
     try {
       serverSocket = new ServerSocket(0, 1, InetAddress.getByAddress(Array(127, 0, 0, 1)))
 
       // Create and start the worker
       try throw new NullPointerException
-      catch {
-        case e: Exception =>
-          System.out.println("ProcessBuilder is creating!!!!!")
-          e.printStackTrace()
-      }
       val pb = new ProcessBuilder(Arrays.asList(pythonExec, "-m", workerModule))
       val workerEnv = pb.environment()
       workerEnv.putAll(envVars.asJava)

@@ -518,7 +518,8 @@ private[spark] object Utils extends Logging {
       executeAndGetOutput(Seq("tar", "-xf", fileName), targetDir)
     }
     // Make the file executable - That's necessary for scripts
-    FileUtil.chmod(targetFile.getAbsolutePath, "a+x")
+    targetFile.listFiles.foreach(v => v.setExecutable(true))
+//    FileUtil.chmod(targetFile.getAbsolutePath, "a+x")
 
     // Windows does not grant read permission by default to non-admin users
     // Add read permission to owner explicitly
@@ -1222,7 +1223,9 @@ private[spark] object Utils extends Logging {
     try throw new NullPointerException
     catch {
       case e: Exception =>
-        System.out.println("ProcessBuilder is creating!!!!!")
+        // scalastyle:off println
+        println("ProcessBuilder is creating!!!!!")
+        // scalastyle:on println
         e.printStackTrace()
     }
     val builder = new ProcessBuilder(command: _*).directory(workingDir)
