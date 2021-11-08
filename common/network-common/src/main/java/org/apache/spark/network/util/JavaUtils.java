@@ -103,17 +103,19 @@ public class JavaUtils {
   public static void deleteRecursively(File file, FilenameFilter filter) throws IOException {
     if (file == null) { return; }
 
+    // below is to avoid graphene delete file issues caused by filesystem in-consistent
+
     // On Unix systems, use operating system command to run faster
     // If that does not work out, fallback to the Java IO way
-    if (SystemUtils.IS_OS_UNIX && filter == null) {
-      try {
-        deleteRecursivelyUsingUnixNative(file);
-        return;
-      } catch (IOException e) {
-        logger.warn("Attempt to delete using native Unix OS command failed for path = {}. " +
-                        "Falling back to Java IO way", file.getAbsolutePath(), e);
-      }
-    }
+    // if (SystemUtils.IS_OS_UNIX && filter == null) {
+    //  try {
+    //    deleteRecursivelyUsingUnixNative(file);
+    //    return;
+    //  } catch (IOException e) {
+    //    logger.warn("Attempt to delete using native Unix OS command failed for path = {}. " +
+    //                    "Falling back to Java IO way", file.getAbsolutePath(), e);
+    //  }
+    // }
 
     deleteRecursivelyUsingJavaIO(file, filter);
   }
@@ -141,7 +143,8 @@ public class JavaUtils {
       boolean deleted = file.delete();
       // Delete can also fail if the file simply did not exist.
       if (!deleted && file.exists()) {
-        throw new IOException("Failed to delete: " + file.getAbsolutePath());
+        logger.warn("tried to delete: " + file.getAbsolutePath());
+        // throw new IOException("Failed to delete: " + file.getAbsolutePath());
       }
     }
   }
