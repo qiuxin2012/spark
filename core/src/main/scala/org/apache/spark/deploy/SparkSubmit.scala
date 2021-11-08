@@ -648,10 +648,20 @@ private[spark] class SparkSubmit extends Logging {
         confKey = DRIVER_SUPERVISE.key),
       OptionAssigner(args.ivyRepoPath, STANDALONE, CLUSTER, confKey = "spark.jars.ivy"),
 
+      // SGX related
+      OptionAssigner(args.sgxEnabled.toString, KUBERNETES, ALL_DEPLOY_MODES,
+        confKey = SGX_ENABLED.key),
+      OptionAssigner(args.sgxMem, KUBERNETES, ALL_DEPLOY_MODES,
+        confKey = SGX_MEM_SIZE.key),
+      OptionAssigner(args.sgxJvmMem, KUBERNETES, ALL_DEPLOY_MODES,
+        confKey = SGX_JVM_MEM_SIZE.key),
+
       // An internal option used only for spark-shell to add user jars to repl's classloader,
       // previously it uses "spark.jars" or "spark.yarn.dist.jars" which now may be pointed to
       // remote jars, so adding a new option to only specify local jars for spark-shell internally.
       OptionAssigner(localJars, ALL_CLUSTER_MGRS, CLIENT, confKey = "spark.repl.local.jars")
+
+
     )
 
     // In client mode, launch the application main class directly

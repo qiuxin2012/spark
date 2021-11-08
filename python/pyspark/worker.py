@@ -642,15 +642,34 @@ def main(infile, outfile):
     # check end of stream
     if read_int(infile) == SpecialLengths.END_OF_STREAM:
         write_int(SpecialLengths.END_OF_STREAM, outfile)
+        print(str(os.getpid()) + "worker's task exit with 0")
     else:
         # write a different value to tell JVM to not reuse this worker
         write_int(SpecialLengths.END_OF_DATA_SECTION, outfile)
-        sys.exit(-1)
+        #sys.exit(-1)
+        print(str(os.getpid()) + "worker's task exit with -1")
+    outfile.flush()
 
 
 if __name__ == '__main__':
     # Read information about how to connect back to the JVM from the environment.
     java_port = int(os.environ["PYTHON_WORKER_FACTORY_PORT"])
     auth_secret = os.environ["PYTHON_WORKER_FACTORY_SECRET"]
-    (sock_file, _) = local_connect_and_auth(java_port, auth_secret)
-    main(sock_file, sock_file)
+    #(sock_file, _) = local_connect_and_auth(java_port, auth_secret)
+    #main(sock_file, sock_file)
+    print("Python worker's pid is " + str(os.getpid()) + "!!!!!!!!!!!!!")
+    (sock_file, sock) = local_connect_and_auth(java_port, auth_secret)
+    sock.settimeout(None)
+    print("sock set timeout successed!")
+    print("Python worker connected to " + str(java_port) + "!!!!!!!!!!!!!")
+    while True:
+        try:
+            data_port = read_int(sock_file)
+            print("Python new data port is " + str(data_port) + "!!!!!!!!!!!!!")
+            (data_sock_file, data_sock) = local_connect_and_auth(data_port, auth_secret)
+            main(data_sock_file, data_sock_file)
+            data_sock.close()
+            write_int(SpecialLengths.FINISHED, sock_file)
+            sock_file.flush()
+        except Exception as e:
+            print("Python waiting for connect. \n" + str(e))

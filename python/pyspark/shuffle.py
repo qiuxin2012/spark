@@ -38,23 +38,27 @@ try:
 
     def get_used_memory():
         """ Return the used memory in MiB """
-        global process
-        if process is None or process._pid != os.getpid():
-            process = psutil.Process(os.getpid())
-        if hasattr(process, "memory_info"):
-            info = process.memory_info()
-        else:
-            info = process.get_memory_info()
-        return info.rss >> 20
+        warnings.warn("INFO @shuffle.py.get_used_memory: ignore call psutil.Process, which is not supported on Graphene")
+        return 0
+        #global process
+        #if process is None or process._pid != os.getpid():
+        #    process = psutil.Process(os.getpid())
+        #if hasattr(process, "memory_info"):
+        #    info = process.memory_info()
+        #else:
+        #    info = process.get_memory_info()
+        #return info.rss >> 20
 
 except ImportError:
 
     def get_used_memory():
         """ Return the used memory in MiB """
         if platform.system() == 'Linux':
-            for line in open('/proc/self/status'):
-                if line.startswith('VmRSS:'):
-                    return int(line.split()[1]) >> 10
+            warnings.warn("INFO @shuffle.py.get_used_memory: ignore linux check /proc/self/status, which is not supported on Graphene")
+            return 0
+            #for line in open('/proc/self/status'):
+                #if line.startswith('VmRSS:'):
+                    #return int(line.split()[1]) >> 10
 
         else:
             warnings.warn("Please install psutil to have better "

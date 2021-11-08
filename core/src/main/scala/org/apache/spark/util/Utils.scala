@@ -560,7 +560,10 @@ private[spark] object Utils extends Logging {
       }
     }
     // Make the file executable - That's necessary for scripts
-    FileUtil.chmod(targetFile.getAbsolutePath, "a+x")
+    // scalastyle:off
+    println("INFO fork chmod is forbidden !!!" + targetFile.getAbsolutePath)
+    // scalastyle:on
+    // FileUtil.chmod(targetFile.getAbsolutePath, "a+x")
 
     // Windows does not grant read permission by default to non-admin users
     // Add read permission to owner explicitly

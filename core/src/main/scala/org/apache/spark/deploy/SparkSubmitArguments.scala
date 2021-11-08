@@ -76,6 +76,11 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
   var keytab: String = null
   private var dynamicAllocationEnabled: Boolean = false
 
+  // sgx
+  var sgxEnabled = false
+  var sgxMem: String = null
+  var sgxJvmMem: String = null
+
   // Standalone cluster mode only
   var supervise: Boolean = false
   var driverCores: String = null
@@ -210,6 +215,12 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
     dynamicAllocationEnabled =
       sparkProperties.get(DYN_ALLOCATION_ENABLED.key).exists("true".equalsIgnoreCase)
 
+    sgxEnabled = sparkProperties.get(config.SGX_ENABLED.key).exists("true".equalsIgnoreCase)
+    sgxMem = Option(sgxMem)
+      .getOrElse(sparkProperties.get(config.SGX_MEM_SIZE.key).orNull)
+    sgxJvmMem = Option(sgxJvmMem)
+      .getOrElse(sparkProperties.get(config.SGX_JVM_MEM_SIZE.key).orNull)
+
     // Global defaults. These should be keep to minimum to avoid confusing behavior.
     master = Option(master).getOrElse("local[*]")
 
@@ -321,6 +332,9 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
     |  packagesExclusions      $packagesExclusions
     |  repositories            $repositories
     |  verbose                 $verbose
+    |  sgxEnabled              $sgxEnabled
+    |  sgxMem                  $sgxMem
+    |  sgxJvmMem               $sgxJvmMem
     |
     |Spark properties used, including those specified through
     | --conf and those from the properties file $propertiesFile:

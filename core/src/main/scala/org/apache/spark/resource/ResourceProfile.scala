@@ -353,9 +353,12 @@ object ResourceProfile extends Logging {
     }
     val customResourceNames = execReq.map(_.id.resourceName).toSet
     val customResources = ereqs.requests.filter(v => customResourceNames.contains(v._1))
+    val sgxEnabled = conf.get(SGX_ENABLED)
+    val sgxMem = conf.get(SGX_MEM_SIZE)
+    val sgxJvmMem = conf.get(SGX_JVM_MEM_SIZE)
     defaultProfileExecutorResources =
       Some(DefaultProfileExecutorResources(cores, memory, offheapMem, pysparkMem,
-        overheadMem, customResources))
+        overheadMem, customResources, sgxEnabled, sgxMem, sgxJvmMem))
     ereqs.requests
   }
 
@@ -408,7 +411,10 @@ object ResourceProfile extends Logging {
       pysparkMemoryMiB: Long,
       memoryOverheadMiB: Long,
       totalMemMiB: Long,
-      customResources: Map[String, ExecutorResourceRequest])
+      customResources: Map[String, ExecutorResourceRequest],
+      sgxEnabled: Boolean,
+      sgxMemGiB: Long,
+      sgxJvmMemGiB: Long)
 
   private[spark] case class DefaultProfileExecutorResources(
       cores: Int,
@@ -416,7 +422,10 @@ object ResourceProfile extends Logging {
       memoryOffHeapMiB: Long,
       pysparkMemoryMiB: Option[Long],
       memoryOverheadMiB: Option[Long],
-      customResources: Map[String, ExecutorResourceRequest])
+      customResources: Map[String, ExecutorResourceRequest],
+      sgxEnabled: Boolean,
+      sgxMemGiB: Long,
+      sgxJvmMemGiB: Long)
 
   private[spark] def calculateOverHeadMemory(
       overHeadMemFromConf: Option[Long],
@@ -447,6 +456,7 @@ object ResourceProfile extends Logging {
     var pysparkMemoryMiB = defaultResources.pysparkMemoryMiB.getOrElse(0L)
     var memoryOverheadMiB = calculateOverHeadMemory(defaultResources.memoryOverheadMiB,
       executorMemoryMiB, overheadFactor)
+
 
     val finalCustomResources = if (rpId != DEFAULT_RESOURCE_PROFILE_ID) {
       val customResources = new mutable.HashMap[String, ExecutorResourceRequest]
@@ -482,8 +492,12 @@ object ResourceProfile extends Logging {
     }
     val totalMemMiB =
       (executorMemoryMiB + memoryOverheadMiB + memoryOffHeapMiB + pysparkMemToUseMiB)
+    val sgxEnabled = defaultResources.sgxEnabled
+    val sgxMemGiB = defaultResources.sgxMemGiB
+    val sgxJvmMemGiB = defaultResources.sgxJvmMemGiB
     ExecutorResourcesOrDefaults(cores, executorMemoryMiB, memoryOffHeapMiB,
-      pysparkMemToUseMiB, memoryOverheadMiB, totalMemMiB, finalCustomResources)
+      pysparkMemToUseMiB, memoryOverheadMiB, totalMemMiB, finalCustomResources,
+      sgxEnabled, sgxMemGiB, sgxJvmMemGiB)
   }
 
   private[spark] val PYSPARK_MEMORY_LOCAL_PROPERTY = "resource.pyspark.memory"

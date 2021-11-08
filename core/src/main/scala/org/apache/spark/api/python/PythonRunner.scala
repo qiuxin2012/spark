@@ -667,6 +667,7 @@ private[spark] object SpecialLengths {
   val END_OF_STREAM = -4
   val NULL = -5
   val START_ARROW_STREAM = -6
+  val FINISHED = -7
 }
 
 private[spark] object BarrierTaskContextMessageProtocol {

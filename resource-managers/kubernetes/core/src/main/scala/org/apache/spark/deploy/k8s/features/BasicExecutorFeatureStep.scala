@@ -121,7 +121,10 @@ private[spark] class BasicExecutorFeatureStep(
           // This is to set the SPARK_CONF_DIR to be /opt/spark/conf
           (ENV_SPARK_CONF_DIR, SPARK_CONF_DIR_INTERNAL),
           (ENV_EXECUTOR_ID, kubernetesConf.executorId),
-          (ENV_RESOURCE_PROFILE_ID, resourceProfile.id.toString)
+          (ENV_RESOURCE_PROFILE_ID, resourceProfile.id.toString),
+          (ENV_SGX_ENABLED, execResources.sgxEnabled.toString),
+          (ENV_SGX_MEM_SIZE, execResources.sgxMemGiB + "G"),
+          (ENV_SGX_JVM_MEM_SIZE, execResources.sgxJvmMemGiB + "G")
         ) ++ kubernetesConf.environment).map { case (k, v) =>
           new EnvVarBuilder()
             .withName(k)

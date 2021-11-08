@@ -17,7 +17,7 @@
 
 package org.apache.spark.api.python
 
-import java.io.{DataInputStream, DataOutputStream, EOFException, InputStream}
+import java.io.{BufferedInputStream, BufferedOutputStream, DataInputStream, DataOutputStream, EOFException, InputStream}
 import java.net.{InetAddress, ServerSocket, Socket, SocketException}
 import java.util.Arrays
 import java.util.concurrent.TimeUnit
@@ -145,12 +145,16 @@ private[spark] class PythonWorkerFactory(pythonExec: String, envVars: Map[String
     }
   }
 
+  import PythonWorkerFactory.simpleWorkerBuffer
+  import PythonWorkerFactory.maxSimpleWorker
+  import PythonWorkerFactory.keysIterator
   /**
    * Launch a worker by executing worker.py (by default) directly and telling it to connect to us.
    */
   private def createSimpleWorker(): Socket = {
     var serverSocket: ServerSocket = null
     try {
+      /*
       serverSocket = new ServerSocket(0, 1, InetAddress.getByAddress(Array(127, 0, 0, 1)))
 
       // Create and start the worker
@@ -163,29 +167,92 @@ private[spark] class PythonWorkerFactory(pythonExec: String, envVars: Map[String
       workerEnv.put("PYTHON_WORKER_FACTORY_PORT", serverSocket.getLocalPort.toString)
       workerEnv.put("PYTHON_WORKER_FACTORY_SECRET", authHelper.secret)
       val worker = pb.start()
+       */
+
+      simpleWorkerBuffer.synchronized {
+        logInfo(s"Thread ${Thread.currentThread().getId}: creating simple worker synchronized")
+        val (worker, ss) = {
+          if (simpleWorkerBuffer.size >= maxSimpleWorker) {
+            val p = keysIterator().next()
+            val buffer = simpleWorkerBuffer.get(p).get
+            logInfo(s"scala1: waiting python's finished result.")
+            val input = new DataInputStream(new BufferedInputStream(buffer._1.getInputStream, 1024))
+            val r = input.readInt()
+            logInfo(s"scala1: python result is ${r}.")
+            require(r == SpecialLengths.FINISHED)
+            val ss = new ServerSocket(0, 1, InetAddress.getByAddress(Array(127, 0, 0, 1)))
+            ss.setSoTimeout(1000000)
+            logInfo(s"scala1: new data local port ${ss.getLocalPort}--------")
+            val output = new DataOutputStream(
+              new BufferedOutputStream(buffer._1.getOutputStream, 1024))
+            output.writeInt(ss.getLocalPort)
+            output.flush()
+            (buffer._2, ss)
+          } else {
+            val manageServerSocket =
+              new ServerSocket(0, 1, InetAddress.getByAddress(Array(127, 0, 0, 1)))
+            manageServerSocket.setSoTimeout(1000000)
+            val pb = new ProcessBuilder(Arrays.asList(pythonExec, "-m", workerModule))
+            val workerEnv = pb.environment()
+            workerEnv.putAll(envVars.asJava)
+            workerEnv.put("PYTHONPATH", pythonPath)
+            // This is equivalent to setting the -u flag;
+            // we use it because ipython doesn't support -u:
+            workerEnv.put("PYTHONUNBUFFERED", "YES")
+            workerEnv.put("PYTHON_WORKER_FACTORY_PORT", manageServerSocket.getLocalPort.toString)
+            workerEnv.put("PYTHON_WORKER_FACTORY_SECRET", authHelper.secret)
+            val worker = pb.start()
+            redirectStreamsToStderr(worker.getInputStream, worker.getErrorStream)
+            var manageSocket: Socket = null
+            try {
+              manageSocket = manageServerSocket.accept()
+              val port = manageSocket.getLocalPort
+              authHelper.authClient(manageSocket)
+              PythonWorkerFactory.simpleWorkerBuffer.put(port,
+                (manageSocket, worker, manageServerSocket))
+            } catch {
+              case e: Exception =>
+                throw new SparkException("Python worker failed to connect back.", e)
+            }
+            val ss = new ServerSocket(0, 1, InetAddress.getByAddress(Array(127, 0, 0, 1)))
+            ss.setSoTimeout(1000000)
+            logInfo(s"scala2: new data local port ${ss.getLocalPort}--------")
+            val output = new DataOutputStream(
+              new BufferedOutputStream(manageSocket.getOutputStream, 1024))
+            output.writeInt(ss.getLocalPort)
+            output.flush()
+            (worker, ss)
+          }
+        }
+        serverSocket = ss
 
       // Redirect worker stdout and stderr
-      redirectStreamsToStderr(worker.getInputStream, worker.getErrorStream)
+      // redirectStreamsToStderr(worker.getInputStream, worker.getErrorStream)
+        // Redirect worker stdout and stderr
 
       // Wait for it to connect to our socket, and validate the auth secret.
-      serverSocket.setSoTimeout(10000)
-
-      try {
-        val socket = serverSocket.accept()
-        authHelper.authClient(socket)
-        self.synchronized {
-          simpleWorkers.put(socket, worker)
+      // serverSocket.setSoTimeout(10000)
+        // Wait for it to connect to our socket, and validate the auth secret.
+        try {
+          val socket = serverSocket.accept()
+          val port = socket.getLocalPort
+          authHelper.authClient(socket)
+          self.synchronized {
+            simpleWorkers.put(socket, worker)
+          }
+          logInfo(s"Thread ${Thread.currentThread().getId}: creating simple worker finished")
+          return socket
+        } catch {
+          case e: Exception =>
+            throw new SparkException("Python worker failed to connect back.", e)
         }
-        return socket
-      } catch {
-        case e: Exception =>
-          throw new SparkException("Python worker failed to connect back.", e)
       }
     } finally {
       if (serverSocket != null) {
         serverSocket.close()
       }
     }
+
     null
   }
 
@@ -378,7 +445,17 @@ private[spark] class PythonWorkerFactory(pythonExec: String, envVars: Map[String
   }
 }
 
-private object PythonWorkerFactory {
+protected object PythonWorkerFactory {
+  val simpleWorkerBuffer = mutable.HashMap[Int, (Socket, Process, ServerSocket)]()
+  var simpleWorkerIter: Iterator[Int] = null
+  def keysIterator(): Iterator[Int] = {
+    if (simpleWorkerIter == null || !simpleWorkerIter.hasNext) {
+      simpleWorkerIter = simpleWorkerBuffer.keysIterator
+    }
+    simpleWorkerIter
+  }
+  val maxSimpleWorker = 1
+
   val PROCESS_WAIT_TIMEOUT_MS = 10000
   val IDLE_WORKER_TIMEOUT_NS = TimeUnit.MINUTES.toNanos(1)  // kill idle workers after 1 minute
 }
