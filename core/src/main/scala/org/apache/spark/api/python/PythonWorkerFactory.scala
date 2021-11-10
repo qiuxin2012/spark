@@ -181,7 +181,7 @@ private[spark] class PythonWorkerFactory(pythonExec: String, envVars: Map[String
             logInfo(s"scala1: python result is ${r}.")
             require(r == SpecialLengths.FINISHED)
             val ss = new ServerSocket(0, 1, InetAddress.getByAddress(Array(127, 0, 0, 1)))
-            ss.setSoTimeout(1000000)
+            ss.setSoTimeout(10000000)
             logInfo(s"scala1: new data local port ${ss.getLocalPort}--------")
             val output = new DataOutputStream(
               new BufferedOutputStream(buffer._1.getOutputStream, 1024))
@@ -191,7 +191,7 @@ private[spark] class PythonWorkerFactory(pythonExec: String, envVars: Map[String
           } else {
             val manageServerSocket =
               new ServerSocket(0, 1, InetAddress.getByAddress(Array(127, 0, 0, 1)))
-            manageServerSocket.setSoTimeout(1000000)
+            manageServerSocket.setSoTimeout(10000000)
             val pb = new ProcessBuilder(Arrays.asList(pythonExec, "-m", workerModule))
             val workerEnv = pb.environment()
             workerEnv.putAll(envVars.asJava)
@@ -215,7 +215,7 @@ private[spark] class PythonWorkerFactory(pythonExec: String, envVars: Map[String
                 throw new SparkException("Python worker failed to connect back.", e)
             }
             val ss = new ServerSocket(0, 1, InetAddress.getByAddress(Array(127, 0, 0, 1)))
-            ss.setSoTimeout(1000000)
+            ss.setSoTimeout(10000000)
             logInfo(s"scala2: new data local port ${ss.getLocalPort}--------")
             val output = new DataOutputStream(
               new BufferedOutputStream(manageSocket.getOutputStream, 1024))
@@ -231,7 +231,7 @@ private[spark] class PythonWorkerFactory(pythonExec: String, envVars: Map[String
         // Redirect worker stdout and stderr
 
       // Wait for it to connect to our socket, and validate the auth secret.
-      // serverSocket.setSoTimeout(10000)
+      // serverSocket.setSoTimeout(10000000)
         // Wait for it to connect to our socket, and validate the auth secret.
         try {
           val socket = serverSocket.accept()
@@ -456,6 +456,6 @@ protected object PythonWorkerFactory {
   }
   val maxSimpleWorker = 1
 
-  val PROCESS_WAIT_TIMEOUT_MS = 10000
+  val PROCESS_WAIT_TIMEOUT_MS = 10000000
   val IDLE_WORKER_TIMEOUT_NS = TimeUnit.MINUTES.toNanos(1)  // kill idle workers after 1 minute
 }

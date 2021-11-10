@@ -53,7 +53,7 @@ private[spark] class SocketAuthHelper(val conf: SparkConf) {
       // Set the socket timeout while checking the auth secret. Reset it before returning.
       val currentTimeout = s.getSoTimeout()
       try {
-        s.setSoTimeout(1000000)
+        s.setSoTimeout(10000000)
         val clientSecret = readUtf8(s)
         if (secret == clientSecret) {
           writeUtf8("ok", s)
@@ -64,7 +64,7 @@ private[spark] class SocketAuthHelper(val conf: SparkConf) {
         }
       } finally {
         s.setSoTimeout(currentTimeout)
-        s.setSoTimeout(1000000)
+        s.setSoTimeout(10000000)
       }
     } finally {
       if (shouldClose) {
