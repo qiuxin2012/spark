@@ -166,12 +166,12 @@ def _load_from_socket(sock_info, serializer):
     import warnings
     warnings.warn("INFO @rdd.py._load_from_socket: sockfile " + str(sockfile), category=None, stacklevel=1, source=None)
     import time
-    # time.sleep(60)
-    # warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN", category=None, stacklevel=1, source=None)
-    # time.sleep(60)
-    # warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN", category=None, stacklevel=1, source=None)
-    # time.sleep(60)
-    # warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN", category=None, stacklevel=1, source=None)
+    time.sleep(60)
+    warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN", category=None, stacklevel=1, source=None)
+    time.sleep(60)
+    warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN", category=None, stacklevel=1, source=None)
+    time.sleep(60)
+    warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN", category=None, stacklevel=1, source=None)
     stream = None
     while stream is None:
         try:
