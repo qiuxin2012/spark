@@ -166,14 +166,23 @@ def _load_from_socket(sock_info, serializer):
     import warnings
     warnings.warn("INFO @rdd.py._load_from_socket: sockfile " + str(sockfile), category=None, stacklevel=1, source=None)
     import time
-    time.sleep(60)
-    warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN", category=None, stacklevel=1, source=None)
-    time.sleep(60)
-    warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN", category=None, stacklevel=1, source=None)
-    time.sleep(60)
-    warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN", category=None, stacklevel=1, source=None)
+    # time.sleep(60)
+    # warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN", category=None, stacklevel=1, source=None)
+    # time.sleep(60)
+    # warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN", category=None, stacklevel=1, source=None)
+    # time.sleep(60)
+    # warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN", category=None, stacklevel=1, source=None)
+    stream = None
+    while stream is None:
+        try:
+            stream = serializer.load_stream(sockfile)
+        except Exception as e:
+            time.sleep(10)
+            print("INFO @rdd.py._load_from_socket: wait to read stream for 10 SEC, since exception happened: " + str(type(e)))
+            pass
     # The socket will be automatically closed when garbage-collected.
-    return serializer.load_stream(sockfile)
+    # return serializer.load_stream(sockfile)
+    return stream
 
 
 def _local_iterator_from_socket(sock_info, serializer):

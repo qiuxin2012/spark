@@ -664,7 +664,18 @@ if __name__ == '__main__':
     print("Python worker connected to " + str(java_port) + "!!!!!!!!!!!!!")
     while True:
         try:
-            data_port = read_int(sock_file)
+            import time
+            print("Python start to read data at: " + str(time.time()))
+            data_port = None
+            while data_port is None:
+                try:
+                    data_port = read_int(sock_file)
+                except Exception as e:
+                    #print("Python fail to read data at: " + str(time.time()))
+                    time.sleep(10)
+                    print("Python wait to read data for 10 SEC, since exception happened: " + str(type(e)))
+                    pass
+            print("Python end to read data at: " + str(time.time()))
             print("Python new data port is " + str(data_port) + "!!!!!!!!!!!!!")
             (data_sock_file, data_sock) = local_connect_and_auth(data_port, auth_secret)
             main(data_sock_file, data_sock_file)
