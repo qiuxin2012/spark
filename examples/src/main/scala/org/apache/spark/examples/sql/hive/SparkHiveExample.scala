@@ -17,7 +17,7 @@
 package org.apache.spark.examples.sql.hive
 
 // $example on:spark_hive$
-import java.io.File
+// import java.io.File
 
 import org.apache.spark.sql.{Row, SaveMode, SparkSession}
 // $example off:spark_hive$
@@ -39,7 +39,13 @@ object SparkHiveExample {
 
     // $example on:spark_hive$
     // warehouseLocation points to the default location for managed databases and tables
-    val warehouseLocation = new File("spark-warehouse").getAbsolutePath
+    // val warehouseLocation = new File("spark-warehouse").getAbsolutePath
+    val warehouseLocation = args(0)
+    // val warehouseLocation = "/ppml/trusted-big-data-ml/work/spark-warehouse"
+    // scalastyle:off println
+    println("INFO warehouseLocation is set as: " + warehouseLocation)
+    // scalastyle:on println
+
 
     val spark = SparkSession
       .builder()
