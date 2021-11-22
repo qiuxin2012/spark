@@ -144,7 +144,8 @@ object SparkHiveExample {
     spark.sqlContext.setConf("hive.exec.dynamic.partition", "true")
     spark.sqlContext.setConf("hive.exec.dynamic.partition.mode", "nonstrict")
     // Create a Hive partitioned table using DataFrame API
-    df.write.partitionBy("key").format("hive").saveAsTable("hive_part_tbl")
+    df.write.partitionBy("key").format("hive")
+      .mode(SaveMode.Overwrite).saveAsTable("hive_part_tbl")
     // Partitioned column `key` will be moved to the end of the schema.
     sql("SELECT * FROM hive_part_tbl").show()
     // +-------+---+
