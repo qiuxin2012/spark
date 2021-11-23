@@ -457,13 +457,13 @@ protected object PythonWorkerFactory {
   }
   val maxSimpleWorker = 1
 
-  def getAuthHelper(val conf: SparkConf): SocketAuthHelper = {
+  def getAuthHelper(conf: SparkConf): SocketAuthHelper = {
     this.synchronized {
       if(authHelper != null) {
         authHelper = new SocketAuthHelper(conf)
       }
     }
-    return authHelper
+    authHelper
   }
 
 
