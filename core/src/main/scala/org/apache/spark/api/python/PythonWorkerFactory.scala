@@ -72,7 +72,7 @@ private[spark] class PythonWorkerFactory(pythonExec: String, envVars: Map[String
       value
     }.getOrElse("pyspark.worker")
 
-  private val authHelper = new SocketAuthHelper(SparkEnv.get.conf)
+  private val authHelper = getAuthHelper(SparkEnv.get.conf)
 
   @GuardedBy("self")
   private var daemon: Process = null
@@ -448,6 +448,7 @@ private[spark] class PythonWorkerFactory(pythonExec: String, envVars: Map[String
 protected object PythonWorkerFactory {
   val simpleWorkerBuffer = mutable.HashMap[Int, (Socket, Process, ServerSocket)]()
   var simpleWorkerIter: Iterator[Int] = null
+  var authHelper: SocketAuthHelper = null
   def keysIterator(): Iterator[Int] = {
     if (simpleWorkerIter == null || !simpleWorkerIter.hasNext) {
       simpleWorkerIter = simpleWorkerBuffer.keysIterator
@@ -455,6 +456,17 @@ protected object PythonWorkerFactory {
     simpleWorkerIter
   }
   val maxSimpleWorker = 1
+
+  def getAuthHelper(val conf: SparkConf): SocketAuthHelper = {
+    this.synchronized {
+      if(authHelper != null) {
+        authHelper = new SocketAuthHelper(conf)
+      }
+    }
+    return authHelper
+  }
+
+
 
   val PROCESS_WAIT_TIMEOUT_MS = 10000000
   val IDLE_WORKER_TIMEOUT_NS = TimeUnit.MINUTES.toNanos(1)  // kill idle workers after 1 minute
