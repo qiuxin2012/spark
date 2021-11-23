@@ -459,7 +459,7 @@ protected object PythonWorkerFactory {
 
   def getAuthHelper(conf: SparkConf): SocketAuthHelper = {
     this.synchronized {
-      if(authHelper != null) {
+      if (authHelper == null) {
         authHelper = new SocketAuthHelper(conf)
       }
     }
