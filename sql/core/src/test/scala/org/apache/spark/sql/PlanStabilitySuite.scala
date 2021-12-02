@@ -86,8 +86,9 @@ trait PlanStabilitySuite extends TPCDSBase with DisableAdaptiveExecutionSuite {
   private val regenerateGoldenFiles: Boolean = System.getenv("SPARK_GENERATE_GOLDEN_FILES") == "1"
 
   protected val baseResourcePath = {
+    val sparkHome = sys.props.getOrElse("spark.test.home", fail("spark.test.home is not set!"))
     // use the same way as `SQLQueryTestSuite` to get the resource path
-    java.nio.file.Paths.get("src", "test", "resources", "tpcds-plan-stability").toFile
+    java.nio.file.Paths.get(sparkHome, "sql", "core", "src", "test", "resources", "tpcds-plan-stability").toFile
   }
 
   private val referenceRegex = "#\\d+".r
