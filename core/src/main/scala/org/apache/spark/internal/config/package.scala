@@ -2045,7 +2045,7 @@ package object config {
       .bytesConf(ByteUnit.GiB)
       .createWithDefaultString("16g")
 
-  private[spark] val SGX_JVM_LOG_LEVEL =
+  private[spark] val SGX_LOG_LEVEL =
     ConfigBuilder("spark.kubernetes.sgx.log.level")
       .doc("the log level of sgx execuotrs, e.g. all, error, debug")
       .version("3.1.2")

@@ -655,6 +655,8 @@ private[spark] class SparkSubmit extends Logging {
         confKey = SGX_MEM_SIZE.key),
       OptionAssigner(args.sgxJvmMem, KUBERNETES, ALL_DEPLOY_MODES,
         confKey = SGX_JVM_MEM_SIZE.key),
+      OptionAssigner(args.sgxLogLevel, KUBERNETES, ALL_DEPLOY_MODES,
+        confKey = SGX_LOG_LEVEL.key),
 
       // An internal option used only for spark-shell to add user jars to repl's classloader,
       // previously it uses "spark.jars" or "spark.yarn.dist.jars" which now may be pointed to

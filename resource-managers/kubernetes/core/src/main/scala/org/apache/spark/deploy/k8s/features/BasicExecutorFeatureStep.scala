@@ -124,7 +124,8 @@ private[spark] class BasicExecutorFeatureStep(
           (ENV_RESOURCE_PROFILE_ID, resourceProfile.id.toString),
           (ENV_SGX_ENABLED, execResources.sgxEnabled.toString),
           (ENV_SGX_MEM_SIZE, execResources.sgxMemGiB + "G"),
-          (ENV_SGX_JVM_MEM_SIZE, execResources.sgxJvmMemGiB + "G")
+          (ENV_SGX_JVM_MEM_SIZE, execResources.sgxJvmMemGiB + "G"),
+          (ENV_SGX_LOG_LEVEL, execResources.sgxLogLevel.toString)
         ) ++ kubernetesConf.environment).map { case (k, v) =>
           new EnvVarBuilder()
             .withName(k)

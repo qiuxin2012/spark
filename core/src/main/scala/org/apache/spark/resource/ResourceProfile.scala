@@ -356,7 +356,7 @@ object ResourceProfile extends Logging {
     val sgxEnabled = conf.get(SGX_ENABLED)
     val sgxMem = conf.get(SGX_MEM_SIZE)
     val sgxJvmMem = conf.get(SGX_JVM_MEM_SIZE)
-    val sgxLogLevel = conf.get(SGX_JVM_LOG_LEVEL)
+    val sgxLogLevel = conf.get(SGX_LOG_LEVEL)
     defaultProfileExecutorResources =
       Some(DefaultProfileExecutorResources(cores, memory, offheapMem, pysparkMem,
         overheadMem, customResources, sgxEnabled, sgxMem, sgxJvmMem, sgxLogLevel))

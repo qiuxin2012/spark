@@ -222,7 +222,7 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
     sgxJvmMem = Option(sgxJvmMem)
       .getOrElse(sparkProperties.get(config.SGX_JVM_MEM_SIZE.key).orNull)
     sgxLogLevel = Option(sgxLogLevel)
-      .getOrElse(sparkProperties.get(config.SGX_JVM_LOG_LEVEL.key).orNull)
+      .getOrElse(sparkProperties.get(config.SGX_LOG_LEVEL.key).orNull)
 
     // Global defaults. These should be keep to minimum to avoid confusing behavior.
     master = Option(master).getOrElse("local[*]")

@@ -68,6 +68,7 @@ private[spark] object Constants {
   val ENV_SGX_ENABLED = "SGX_ENABLED"
   val ENV_SGX_MEM_SIZE = "SGX_MEM_SIZE"
   val ENV_SGX_JVM_MEM_SIZE = "SGX_JVM_MEM_SIZE"
+  val ENV_SGX_LOG_LEVEL = "SGX_LOG_LEVEL"
   // Spark app configs for containers
   val SPARK_CONF_VOLUME_DRIVER = "spark-conf-volume-driver"
   val SPARK_CONF_VOLUME_EXEC = "spark-conf-volume-exec"
