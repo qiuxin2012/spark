@@ -359,7 +359,7 @@ object ResourceProfile extends Logging {
     val sgxLogLevel = conf.get(SGX_JVM_LOG_LEVEL)
     defaultProfileExecutorResources =
       Some(DefaultProfileExecutorResources(cores, memory, offheapMem, pysparkMem,
-        overheadMem, customResources, sgxEnabled, sgxMem, sgxJvmMem, sgxJvmMem))
+        overheadMem, customResources, sgxEnabled, sgxMem, sgxJvmMem, sgxLogLevel))
     ereqs.requests
   }
 
