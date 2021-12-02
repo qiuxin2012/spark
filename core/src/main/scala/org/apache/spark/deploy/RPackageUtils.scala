@@ -114,6 +114,14 @@ private[deploy] object RPackageUtils extends Logging {
     if (verbose) {
       print(s"Building R package with the command: $installCmd", printStream)
     }
+    try throw new Exception("ProcessBuilder is creating!!!!!")
+    catch {
+      case e: Exception =>
+        // scalastyle:off println
+        println("ProcessBuilder is creating!!!!!")
+        // scalastyle:on println
+        e.printStackTrace()
+    }
     try {
       val builder = new ProcessBuilder(installCmd.asJava)
       builder.redirectErrorStream(true)

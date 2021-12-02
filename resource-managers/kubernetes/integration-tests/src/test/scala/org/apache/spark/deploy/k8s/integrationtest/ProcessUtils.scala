@@ -35,6 +35,14 @@ object ProcessUtils extends Logging {
       timeout: Long,
       dumpErrors: Boolean = true,
       env: Map[String, String] = Map.empty[String, String]): Seq[String] = {
+    try throw new Exception("ProcessBuilder is creating!!!!!")
+    catch {
+      case e: Exception =>
+        // scalastyle:off println
+        println("ProcessBuilder is creating!!!!!")
+        // scalastyle:on println
+        e.printStackTrace()
+    }
     val pb = new ProcessBuilder().command(fullCommand: _*)
     pb.environment().putAll(env.asJava)
     pb.redirectErrorStream(true)

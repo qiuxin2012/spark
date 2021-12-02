@@ -86,7 +86,15 @@ object RRunner {
     // Wait for RBackend initialization to finish
     if (initialized.tryAcquire(backendTimeout, TimeUnit.SECONDS)) {
       // Launch R
-      val returnCode = try {
+        try throw new Exception("ProcessBuilder is creating!!!!!")
+        catch {
+          case e: Exception =>
+            // scalastyle:off println
+            println("ProcessBuilder is creating!!!!!")
+            // scalastyle:on println
+            e.printStackTrace()
+        }
+        val returnCode = try {
         val builder = new ProcessBuilder((Seq(rCommand, rFileNormalized) ++ otherArgs).asJava)
         val env = builder.environment()
         env.put("EXISTING_SPARKR_BACKEND_PORT", sparkRBackendPort.toString)

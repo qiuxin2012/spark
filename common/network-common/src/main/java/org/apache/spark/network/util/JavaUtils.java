@@ -150,6 +150,12 @@ public class JavaUtils {
   }
 
   private static void deleteRecursivelyUsingUnixNative(File file) throws IOException {
+    try {
+      throw new Exception("ProcessBuilder is creating!!!!!");
+    } catch (Exception e) {
+      System.out.println("ProcessBuilder is creating!!!!!");
+      e.printStackTrace();
+    }
     ProcessBuilder builder = new ProcessBuilder("rm", "-rf", file.getAbsolutePath());
     Process process = null;
     int exitCode = -1;

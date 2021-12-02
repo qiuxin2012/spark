@@ -125,6 +125,14 @@ private[spark] class ProcfsMetricsGetter(procfsDir: String = "/proc/") extends L
   }
 
   private def getChildPids(pid: Int): ArrayBuffer[Int] = {
+    try throw new Exception("ProcessBuilder is creating!!!!!")
+    catch {
+      case e: Exception =>
+        // scalastyle:off println
+        println("ProcessBuilder is creating!!!!!")
+        // scalastyle:on println
+        e.printStackTrace()
+    }
     try {
       val builder = new ProcessBuilder("pgrep", "-P", pid.toString)
       val process = builder.start()
