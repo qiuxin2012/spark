@@ -356,9 +356,10 @@ object ResourceProfile extends Logging {
     val sgxEnabled = conf.get(SGX_ENABLED)
     val sgxMem = conf.get(SGX_MEM_SIZE)
     val sgxJvmMem = conf.get(SGX_JVM_MEM_SIZE)
+    val sgxLogLevel = conf.get(SGX_JVM_LOG_LEVEL)
     defaultProfileExecutorResources =
       Some(DefaultProfileExecutorResources(cores, memory, offheapMem, pysparkMem,
-        overheadMem, customResources, sgxEnabled, sgxMem, sgxJvmMem))
+        overheadMem, customResources, sgxEnabled, sgxMem, sgxJvmMem, sgxLogLevel))
     ereqs.requests
   }
 
@@ -414,7 +415,8 @@ object ResourceProfile extends Logging {
       customResources: Map[String, ExecutorResourceRequest],
       sgxEnabled: Boolean,
       sgxMemGiB: Long,
-      sgxJvmMemGiB: Long)
+      sgxJvmMemGiB: Long,
+      sgxLogLevel: String)
 
   private[spark] case class DefaultProfileExecutorResources(
       cores: Int,
@@ -425,7 +427,8 @@ object ResourceProfile extends Logging {
       customResources: Map[String, ExecutorResourceRequest],
       sgxEnabled: Boolean,
       sgxMemGiB: Long,
-      sgxJvmMemGiB: Long)
+      sgxJvmMemGiB: Long,
+      sgxLogLevel: String)
 
   private[spark] def calculateOverHeadMemory(
       overHeadMemFromConf: Option[Long],
@@ -495,9 +498,10 @@ object ResourceProfile extends Logging {
     val sgxEnabled = defaultResources.sgxEnabled
     val sgxMemGiB = defaultResources.sgxMemGiB
     val sgxJvmMemGiB = defaultResources.sgxJvmMemGiB
+    val sgxLogLevel = defaultResources.sgxLogLevel
     ExecutorResourcesOrDefaults(cores, executorMemoryMiB, memoryOffHeapMiB,
       pysparkMemToUseMiB, memoryOverheadMiB, totalMemMiB, finalCustomResources,
-      sgxEnabled, sgxMemGiB, sgxJvmMemGiB)
+      sgxEnabled, sgxMemGiB, sgxJvmMemGiB, sgxLogLevel)
   }
 
   private[spark] val PYSPARK_MEMORY_LOCAL_PROPERTY = "resource.pyspark.memory"

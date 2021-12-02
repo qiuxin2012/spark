@@ -80,6 +80,7 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
   var sgxEnabled = false
   var sgxMem: String = null
   var sgxJvmMem: String = null
+  var sgxLogLevel: String = null
 
   // Standalone cluster mode only
   var supervise: Boolean = false
@@ -220,6 +221,8 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
       .getOrElse(sparkProperties.get(config.SGX_MEM_SIZE.key).orNull)
     sgxJvmMem = Option(sgxJvmMem)
       .getOrElse(sparkProperties.get(config.SGX_JVM_MEM_SIZE.key).orNull)
+    sgxLogLevel = Option(sgxLogLevel)
+      .getOrElse(sparkProperties.get(config.SGX_JVM_LOG_LEVEL.key).orNull)
 
     // Global defaults. These should be keep to minimum to avoid confusing behavior.
     master = Option(master).getOrElse("local[*]")
@@ -335,6 +338,7 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
     |  sgxEnabled              $sgxEnabled
     |  sgxMem                  $sgxMem
     |  sgxJvmMem               $sgxJvmMem
+    |  sgxLogLevel             $sgxLogLevel
     |
     |Spark properties used, including those specified through
     | --conf and those from the properties file $propertiesFile:
