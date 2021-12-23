@@ -282,6 +282,11 @@ private[spark] class SecurityManager(
   def getSecretKey(): String = {
     if (isAuthenticationEnabled) {
       val creds = UserGroupInformation.getCurrentUser().getCredentials()
+      logInfo("##### creds: " + creds)
+      logInfo("##### creds.getSecretKey(): " + creds.getSecretKey(SECRET_LOOKUP_KEY))
+      logInfo("##### secretKey: " + secretKey)
+      logInfo("##### sparkConf.getenv(): " + sparkConf.getenv(ENV_AUTH_SECRET))
+      logInfo("##### secretKeyFromFile(): " + secretKeyFromFile())
       Option(creds.getSecretKey(SECRET_LOOKUP_KEY))
         .map { bytes => new String(bytes, UTF_8) }
         // Secret key may not be found in current UGI's credentials.
