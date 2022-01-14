@@ -145,7 +145,7 @@ def _create_local_socket(sock_info):
     sock.settimeout(None)
     return sockfile
 
-
+loaded = False
 def _load_from_socket(sock_info, serializer):
     """
     Connect to a local socket described by sock_info and use the given serializer to yield data
@@ -166,12 +166,17 @@ def _load_from_socket(sock_info, serializer):
     import warnings
     warnings.warn("INFO @rdd.py._load_from_socket: sockfile " + str(sockfile), category=None, stacklevel=1, source=None)
     import time
-    time.sleep(60)
-    warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN", category=None, stacklevel=1, source=None)
-    time.sleep(60)
-    warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN", category=None, stacklevel=1, source=None)
-    time.sleep(60)
-    warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN", category=None, stacklevel=1, source=None)
+    global loaded
+    if loaded==False:
+      time.sleep(60)
+      warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN", category=None, stacklevel=1, source=None)
+      time.sleep(60)
+      warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN", category=None, stacklevel=1, source=None)
+      time.sleep(60)
+      warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN", category=None, stacklevel=1, source=None)
+    else:
+      print("INFO @rdd.py._load_from_socket: already loaded, skip waiting.")
+
     stream = None
     while stream is None:
         try:

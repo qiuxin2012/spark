@@ -148,6 +148,39 @@ private[spark] class PythonWorkerFactory(pythonExec: String, envVars: Map[String
   import PythonWorkerFactory.simpleWorkerBuffer
   import PythonWorkerFactory.maxSimpleWorker
   import PythonWorkerFactory.keysIterator
+  private def newPythonProcess(): (Socket, Process) = {
+    val manageServerSocket =
+      new ServerSocket(0, 1, InetAddress.getByAddress(Array(127, 0, 0, 1)))
+    manageServerSocket.setSoTimeout(10000000)
+    val pb = new ProcessBuilder(Arrays.asList(pythonExec, "-m", workerModule))
+    val workerEnv = pb.environment()
+    workerEnv.putAll(envVars.asJava)
+    workerEnv.put("PYTHONPATH", pythonPath)
+    // This is equivalent to setting the -u flag;
+    // we use it because ipython doesn't support -u:
+    workerEnv.put("PYTHONUNBUFFERED", "YES")
+    workerEnv.put("PYTHON_WORKER_FACTORY_PORT", manageServerSocket.getLocalPort.toString)
+    workerEnv.put("PYTHON_WORKER_FACTORY_SECRET", authHelper.secret)
+    val worker = pb.start()
+    logInfo(s"scala1: new python worker started.")
+    redirectStreamsToStderr(worker.getInputStream, worker.getErrorStream)
+    var manageSocket: Socket = null
+    try {
+      manageSocket = manageServerSocket.accept()
+      val port = manageSocket.getLocalPort
+      authHelper.authClient(manageSocket)
+    logInfo(s"scala1: new python worker started.")
+    redirectStreamsToStderr(worker.getInputStream, worker.getErrorStream)
+      PythonWorkerFactory.simpleWorkerBuffer.put(port,
+        (manageSocket, worker, manageServerSocket))
+      (manageSocket, worker)
+    } catch {
+      case e: Exception =>
+        throw new SparkException("Python worker failed to connect back.", e)
+    }
+  
+  }
+
   /**
    * Launch a worker by executing worker.py (by default) directly and telling it to connect to us.
    */
@@ -172,59 +205,37 @@ private[spark] class PythonWorkerFactory(pythonExec: String, envVars: Map[String
       simpleWorkerBuffer.synchronized {
         logInfo(s"Thread ${Thread.currentThread().getId}: creating simple worker synchronized")
         val (worker, ss) = {
-          if (simpleWorkerBuffer.size >= maxSimpleWorker) {
+          val (manageServerSocket, pythonWorker) = if (simpleWorkerBuffer.size >= maxSimpleWorker) {
             val p = keysIterator().next()
             val buffer = simpleWorkerBuffer.get(p).get
             logInfo(s"scala1: waiting python's finished result.")
             val input = new DataInputStream(new BufferedInputStream(buffer._1.getInputStream, 1024))
-            val r = input.readInt()
-            logInfo(s"scala1: python result is ${r}.")
-            require(r == SpecialLengths.FINISHED)
-            val ss = new ServerSocket(0, 1, InetAddress.getByAddress(Array(127, 0, 0, 1)))
-            ss.setSoTimeout(10000000)
-            logInfo(s"scala1: new data local port ${ss.getLocalPort}--------")
-            val output = new DataOutputStream(
-              new BufferedOutputStream(buffer._1.getOutputStream, 1024))
-            output.writeInt(ss.getLocalPort)
-            output.flush()
-            (buffer._2, ss)
-          } else {
-            val manageServerSocket =
-              new ServerSocket(0, 1, InetAddress.getByAddress(Array(127, 0, 0, 1)))
-            manageServerSocket.setSoTimeout(10000000)
-            val pb = new ProcessBuilder(Arrays.asList(pythonExec, "-m", workerModule))
-            val workerEnv = pb.environment()
-            workerEnv.putAll(envVars.asJava)
-            workerEnv.put("PYTHONPATH", pythonPath)
-            // This is equivalent to setting the -u flag;
-            // we use it because ipython doesn't support -u:
-            workerEnv.put("PYTHONUNBUFFERED", "YES")
-            workerEnv.put("PYTHON_WORKER_FACTORY_PORT", manageServerSocket.getLocalPort.toString)
-            workerEnv.put("PYTHON_WORKER_FACTORY_SECRET", authHelper.secret)
-            val worker = pb.start()
-            redirectStreamsToStderr(worker.getInputStream, worker.getErrorStream)
-            var manageSocket: Socket = null
             try {
-              manageSocket = manageServerSocket.accept()
-              val port = manageSocket.getLocalPort
-              authHelper.authClient(manageSocket)
-              PythonWorkerFactory.simpleWorkerBuffer.put(port,
-                (manageSocket, worker, manageServerSocket))
+              val r = input.readInt()
+              logInfo(s"scala1: python result is ${r}.")
+              require(r == SpecialLengths.FINISHED)
+              (buffer._1, buffer._2)
             } catch {
-              case e: Exception =>
-                throw new SparkException("Python worker failed to connect back.", e)
+              case eof: java.io.EOFException =>
+              logInfo(s"scala1: result is empty python worker $p has exited, will remove it from buffer.")
+              simpleWorkerBuffer.remove(p)
+              logInfo(s"scala1: python worker $p removed, will create a new one.")
+              newPythonProcess()
             }
-            val ss = new ServerSocket(0, 1, InetAddress.getByAddress(Array(127, 0, 0, 1)))
-            ss.setSoTimeout(10000000)
-            logInfo(s"scala2: new data local port ${ss.getLocalPort}--------")
-            val output = new DataOutputStream(
-              new BufferedOutputStream(manageSocket.getOutputStream, 1024))
-            output.writeInt(ss.getLocalPort)
-            output.flush()
-            (worker, ss)
+          } else {
+            newPythonProcess()
           }
+          val dss = new ServerSocket(0, 1, InetAddress.getByAddress(Array(127, 0, 0, 1)))
+          dss.setSoTimeout(10000000)
+          logInfo(s"scala1: new data local port ${dss.getLocalPort}--------")
+          val output = new DataOutputStream(
+            new BufferedOutputStream(manageServerSocket.getOutputStream, 1024))
+          output.writeInt(dss.getLocalPort)
+          output.flush()
+          (pythonWorker, dss)
         }
         serverSocket = ss
+
 
       // Redirect worker stdout and stderr
       // redirectStreamsToStderr(worker.getInputStream, worker.getErrorStream)

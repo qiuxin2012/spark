@@ -24,7 +24,7 @@ private[spark] object Python {
   val PYTHON_WORKER_REUSE = ConfigBuilder("spark.python.worker.reuse")
     .version("1.2.0")
     .booleanConf
-    .createWithDefault(true)
+    .createWithDefault(false)
 
   val PYTHON_TASK_KILL_TIMEOUT = ConfigBuilder("spark.python.task.killTimeout")
     .version("2.2.2")
@@ -34,7 +34,7 @@ private[spark] object Python {
   val PYTHON_USE_DAEMON = ConfigBuilder("spark.python.use.daemon")
     .version("2.3.0")
     .booleanConf
-    .createWithDefault(true)
+    .createWithDefault(false)
 
   val PYTHON_DAEMON_MODULE = ConfigBuilder("spark.python.daemon.module")
     .version("2.4.0")

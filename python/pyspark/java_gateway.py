@@ -60,8 +60,14 @@ def launch_gateway(conf=None, popen_kwargs=None):
         # Launch the Py4j gateway using Spark's run command so that we pick up the
         # proper classpath and settings from spark-env.sh
         on_windows = platform.system() == "Windows"
-        script = "./bin/spark-submit.cmd" if on_windows else "./bin/spark-submit"
-        command = [os.path.join(SPARK_HOME, script)]
+        #script = "./bin/spark-submit.cmd" if on_windows else "./bin/spark-submit"
+        #command = [os.path.join(SPARK_HOME, script)]
+        j_classpath = str(SPARK_HOME) + '/conf/:' + str(SPARK_HOME) + '/jars/*'
+        java_path = 'java' if os.getenv('JAVA_HOME') is None else os.getenv('JAVA_HOME') + '/bin/java'
+        command = [java_path, '-cp', j_classpath,
+                   '-Xmx2g', 'org.apache.spark.deploy.SparkSubmit']
+        print("---------------Launching java gateway with java command " + str(commnad))
+
         if conf:
             for k, v in conf.getAll():
                 command += ['--conf', '%s=%s' % (k, v)]
@@ -69,6 +75,8 @@ def launch_gateway(conf=None, popen_kwargs=None):
         if os.environ.get("SPARK_TESTING"):
             submit_args = ' '.join([
                 "--conf spark.ui.enabled=false",
+                "--conf spark.python.worker.reuse=false",
+                "--conf spark.python.use.daemon=false",
                 submit_args
             ])
         command = command + shlex.split(submit_args)
