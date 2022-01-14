@@ -66,7 +66,7 @@ def launch_gateway(conf=None, popen_kwargs=None):
         java_path = 'java' if os.getenv('JAVA_HOME') is None else os.getenv('JAVA_HOME') + '/bin/java'
         command = [java_path, '-cp', j_classpath,
                    '-Xmx2g', 'org.apache.spark.deploy.SparkSubmit']
-        print("---------------Launching java gateway with java command " + str(commnad))
+        print("---------------Launching java gateway with java command " + str(command))
 
         if conf:
             for k, v in conf.getAll():
