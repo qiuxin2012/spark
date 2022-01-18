@@ -21,6 +21,7 @@ Worker that receives input from Piped RDD.
 import os
 import sys
 import time
+from datetime import datetime
 from inspect import getfullargspec
 import importlib
 # 'resource' is a Unix specific module.
@@ -664,8 +665,7 @@ if __name__ == '__main__':
     print("Python worker connected to " + str(java_port) + "!!!!!!!!!!!!!")
     while True:
         try:
-            import time
-            print("Python start to read data at: " + str(time.time()))
+            print("Python start to read data at: " + str(datetime.now()))
             data_port = None
             while data_port is None:
                 try:
@@ -675,7 +675,7 @@ if __name__ == '__main__':
                     time.sleep(10)
                     print("Python wait to read data for 10 SEC, since exception happened: " + str(type(e)))
                     pass
-            print("Python end to read data at: " + str(time.time()))
+            print("Python end to read data at: " + str(datetime.now()))
             print("Python new data port is " + str(data_port) + "!!!!!!!!!!!!!")
             (data_sock_file, data_sock) = local_connect_and_auth(data_port, auth_secret)
             main(data_sock_file, data_sock_file)

@@ -64,9 +64,7 @@ def launch_gateway(conf=None, popen_kwargs=None):
         #command = [os.path.join(SPARK_HOME, script)]
         j_classpath = str(SPARK_HOME) + '/conf/:' + str(SPARK_HOME) + '/jars/*'
         java_path = 'java' if os.getenv('JAVA_HOME') is None else os.getenv('JAVA_HOME') + '/bin/java'
-        command = [java_path, '-cp', j_classpath,
-                   '-Xmx2g', 'org.apache.spark.deploy.SparkSubmit']
-        print("---------------Launching java gateway with java command " + str(command))
+        command = [java_path, '-cp', j_classpath, '-Xmx2g', 'org.apache.spark.deploy.SparkSubmit']
 
         if conf:
             for k, v in conf.getAll():
@@ -80,6 +78,7 @@ def launch_gateway(conf=None, popen_kwargs=None):
                 submit_args
             ])
         command = command + shlex.split(submit_args)
+        print("---------------Launching java gateway with java command " + str(command))
 
         # Create a temporary directory where the gateway server should write the connection
         # information.
@@ -98,6 +97,7 @@ def launch_gateway(conf=None, popen_kwargs=None):
             popen_kwargs['stdin'] = PIPE
             # We always set the necessary environment variables.
             popen_kwargs['env'] = env
+            print("---------------Popen env " + str(env))
             if not on_windows:
                 # Don't send ctrl-c / SIGINT to the Java gateway:
                 def preexec_func():
@@ -108,6 +108,9 @@ def launch_gateway(conf=None, popen_kwargs=None):
                 # preexec_fn not supported on Windows
                 proc = Popen(command, **popen_kwargs)
 
+            if os.getenv('SGX_MODE'):
+                print("sleep 200s on SGX")
+                time.sleep(200)
             # Wait for the file to appear, or for the process to exit, whichever happens first.
             while not proc.poll() and not os.path.isfile(conn_info_file):
                 time.sleep(0.1)

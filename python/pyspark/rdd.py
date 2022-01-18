@@ -167,15 +167,15 @@ def _load_from_socket(sock_info, serializer):
     warnings.warn("INFO @rdd.py._load_from_socket: sockfile " + str(sockfile), category=None, stacklevel=1, source=None)
     import time
     global loaded
-    if loaded==False:
-      time.sleep(60)
-      warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN", category=None, stacklevel=1, source=None)
-      time.sleep(60)
-      warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN", category=None, stacklevel=1, source=None)
-      time.sleep(60)
-      warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN", category=None, stacklevel=1, source=None)
-    else:
-      print("INFO @rdd.py._load_from_socket: already loaded, skip waiting.")
+    if loaded==False and os.getenv('SGX_MODE'):
+        time.sleep(60)
+        warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN in SGX", category=None, stacklevel=1, source=None)
+        time.sleep(60)
+        warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN in SGX", category=None, stacklevel=1, source=None)
+        time.sleep(60)
+        warnings.warn("INFO @rdd.py._load_from_socket: WAIT A MIN in SGX", category=None, stacklevel=1, source=None)
+    elif os.getenv('SGX_MODE'):
+        print("INFO @rdd.py._load_from_socket: already loaded, skip waiting.")
 
     stream = None
     while stream is None:
