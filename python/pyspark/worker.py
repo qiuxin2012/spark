@@ -663,7 +663,9 @@ if __name__ == '__main__':
     sock.settimeout(None)
     print("sock set timeout successed!")
     print("Python worker connected to " + str(java_port) + "!!!!!!!!!!!!!")
-    while True:
+    max_retry = 2
+    retry = 0
+    while retry < max_retry:
         try:
             print("Python start to read data at: " + str(datetime.now()))
             data_port = None
@@ -683,4 +685,6 @@ if __name__ == '__main__':
             write_int(SpecialLengths.FINISHED, sock_file)
             sock_file.flush()
         except Exception as e:
-            print("Python waiting for connect. \n" + str(e))
+            print("Python worker.py got exception \n")
+            traceback.print_exception(*sys.exc_info())
+            retry += 1

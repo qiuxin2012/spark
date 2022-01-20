@@ -186,6 +186,9 @@ private[spark] class PythonWorkerFactory(pythonExec: String, envVars: Map[String
    */
   private def createSimpleWorker(): Socket = {
     var serverSocket: ServerSocket = null
+    // Only retry
+    val maxRetry = 3
+    var retry = 0
     try {
       /*
       serverSocket = new ServerSocket(0, 1, InetAddress.getByAddress(Array(127, 0, 0, 1)))
@@ -201,7 +204,7 @@ private[spark] class PythonWorkerFactory(pythonExec: String, envVars: Map[String
       workerEnv.put("PYTHON_WORKER_FACTORY_SECRET", authHelper.secret)
       val worker = pb.start()
        */
-
+      while (retry < maxRetry) {
       simpleWorkerBuffer.synchronized {
         logInfo(s"Thread ${Thread.currentThread().getId}: creating simple worker synchronized")
         val (worker, ss) = {
@@ -210,16 +213,27 @@ private[spark] class PythonWorkerFactory(pythonExec: String, envVars: Map[String
             val buffer = simpleWorkerBuffer.get(p).get
             logInfo(s"scala1: waiting python's finished result.")
             val input = new DataInputStream(new BufferedInputStream(buffer._1.getInputStream, 1024))
-            try {
-              val r = input.readInt()
-              logInfo(s"scala1: python result is ${r}.")
-              require(r == SpecialLengths.FINISHED)
-              (buffer._1, buffer._2)
-            } catch {
-              case eof: java.io.EOFException =>
-              logInfo(s"scala1: result is empty python worker $p has exited, will remove it from buffer.")
+            if (buffer._2.isAlive) {
+              try {
+                val r = input.readInt()
+                logInfo(s"scala1: python result is ${r}.")
+                require(r == SpecialLengths.FINISHED)
+                (buffer._1, buffer._2)
+              } catch {
+                case eof: java.io.EOFException =>
+                  logWarning(s"scala1: get eof exception, will remove the worker $p from buffer.")
+                  if (buffer._2.isAlive) {
+                    buffer._2.destroyForcibly()
+                  }
+                  simpleWorkerBuffer.remove(p)
+                  logWarning(s"scala1: python worker $p removed, will create a new one.")
+                  newPythonProcess()
+              }
+            } else {
+              logWarning(s"scala1: python worker $p has exited," +
+                s" code ${buffer._2.exitValue()}, will remove it from buffer.")
               simpleWorkerBuffer.remove(p)
-              logInfo(s"scala1: python worker $p removed, will create a new one.")
+              logWarning(s"scala1: python worker $p removed, will create a new one.")
               newPythonProcess()
             }
           } else {
@@ -237,16 +251,15 @@ private[spark] class PythonWorkerFactory(pythonExec: String, envVars: Map[String
         serverSocket = ss
 
 
-      // Redirect worker stdout and stderr
-      // redirectStreamsToStderr(worker.getInputStream, worker.getErrorStream)
+        // Redirect worker stdout and stderr
+        // redirectStreamsToStderr(worker.getInputStream, worker.getErrorStream)
         // Redirect worker stdout and stderr
 
-      // Wait for it to connect to our socket, and validate the auth secret.
-      // serverSocket.setSoTimeout(10000000)
+        // Wait for it to connect to our socket, and validate the auth secret.
+        // serverSocket.setSoTimeout(10000000)
         // Wait for it to connect to our socket, and validate the auth secret.
         try {
           val socket = serverSocket.accept()
-          val port = socket.getLocalPort
           authHelper.authClient(socket)
           self.synchronized {
             simpleWorkers.put(socket, worker)
@@ -255,8 +268,15 @@ private[spark] class PythonWorkerFactory(pythonExec: String, envVars: Map[String
           return socket
         } catch {
           case e: Exception =>
-            throw new SparkException("Python worker failed to connect back.", e)
+            if (retry >= maxRetry) {
+              throw new SparkException(s"Python worker failed to connect back ${maxRetry}", e)
+            } else {
+              retry += 1
+              logWarning(s"Python worker failed to connect back ${retry}" +
+                s" times." + e.getStackTrace.toString)
+            }
         }
+      }
       }
     } finally {
       if (serverSocket != null) {
