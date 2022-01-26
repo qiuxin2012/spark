@@ -151,7 +151,7 @@ private[spark] class PythonWorkerFactory(pythonExec: String, envVars: Map[String
   private def newPythonProcess(): (Socket, Process) = {
     val manageServerSocket =
       new ServerSocket(0, 1, InetAddress.getByAddress(Array(127, 0, 0, 1)))
-    manageServerSocket.setSoTimeout(10000000)
+    manageServerSocket.setSoTimeout(300000)
     val pb = new ProcessBuilder(Arrays.asList(pythonExec, "-m", workerModule))
     val workerEnv = pb.environment()
     workerEnv.putAll(envVars.asJava)
@@ -162,14 +162,14 @@ private[spark] class PythonWorkerFactory(pythonExec: String, envVars: Map[String
     workerEnv.put("PYTHON_WORKER_FACTORY_PORT", manageServerSocket.getLocalPort.toString)
     workerEnv.put("PYTHON_WORKER_FACTORY_SECRET", authHelper.secret)
     val worker = pb.start()
-    logInfo(s"scala1: new python worker started.")
+    logWarning(s"scala1: new python worker started.")
     redirectStreamsToStderr(worker.getInputStream, worker.getErrorStream)
     var manageSocket: Socket = null
     try {
       manageSocket = manageServerSocket.accept()
       val port = manageSocket.getLocalPort
       authHelper.authClient(manageSocket)
-    logInfo(s"scala1: new python worker started.")
+    logWarning(s"scala1: new python worker started.")
     redirectStreamsToStderr(worker.getInputStream, worker.getErrorStream)
       PythonWorkerFactory.simpleWorkerBuffer.put(port,
         (manageSocket, worker, manageServerSocket))
@@ -186,7 +186,6 @@ private[spark] class PythonWorkerFactory(pythonExec: String, envVars: Map[String
    */
   private def createSimpleWorker(): Socket = {
     var serverSocket: ServerSocket = null
-    // Only retry
     val maxRetry = 3
     var retry = 0
     try {
@@ -206,22 +205,24 @@ private[spark] class PythonWorkerFactory(pythonExec: String, envVars: Map[String
        */
       while (retry < maxRetry) {
       simpleWorkerBuffer.synchronized {
-        logInfo(s"Thread ${Thread.currentThread().getId}: creating simple worker synchronized")
+        logWarning(s"Thread ${Thread.currentThread().getId}: creating simple worker synchronized")
         val (worker, ss) = {
           val (manageServerSocket, pythonWorker) = if (simpleWorkerBuffer.size >= maxSimpleWorker) {
             val p = keysIterator().next()
             val buffer = simpleWorkerBuffer.get(p).get
-            logInfo(s"scala1: waiting python's finished result.")
+            logWarning(s"scala1: waiting python's finished result.")
             val input = new DataInputStream(new BufferedInputStream(buffer._1.getInputStream, 1024))
             if (buffer._2.isAlive) {
               try {
                 val r = input.readInt()
-                logInfo(s"scala1: python result is ${r}.")
-                require(r == SpecialLengths.FINISHED)
+                logWarning(s"scala1: python result is ${r}.")
+                require(r == SpecialLengths.FINISHED || r == SpecialLengths.PYTHON_EXCEPTION_THROWN)
                 (buffer._1, buffer._2)
               } catch {
-                case eof: java.io.EOFException =>
-                  logWarning(s"scala1: get eof exception, will remove the worker $p from buffer.")
+                case e: Exception =>
+                  logWarning(s"scala1: get exception ${e.getMessage}," +
+                    s" will remove the worker $p from buffer.")
+                  logWarning(s"${e.getStackTrace.map(_.toString).mkString("\n")}")
                   if (buffer._2.isAlive) {
                     buffer._2.destroyForcibly()
                   }
@@ -239,9 +240,16 @@ private[spark] class PythonWorkerFactory(pythonExec: String, envVars: Map[String
           } else {
             newPythonProcess()
           }
-          val dss = new ServerSocket(0, 1, InetAddress.getByAddress(Array(127, 0, 0, 1)))
-          dss.setSoTimeout(10000000)
-          logInfo(s"scala1: new data local port ${dss.getLocalPort}--------")
+          val dss = try {
+            new ServerSocket(0, 1, InetAddress.getByAddress(Array(127, 0, 0, 1)))
+          } catch {
+            case e: Exception =>
+              logWarning(s"scala1: Got exception when creating data sockect, retry 10s later.")
+              Thread.sleep(10000)
+              new ServerSocket(0, 1, InetAddress.getByAddress(Array(127, 0, 0, 1)))
+          }
+          dss.setSoTimeout(300000)
+          logWarning(s"scala1: new data local port ${dss.getLocalPort}--------")
           val output = new DataOutputStream(
             new BufferedOutputStream(manageServerSocket.getOutputStream, 1024))
           output.writeInt(dss.getLocalPort)
@@ -264,12 +272,12 @@ private[spark] class PythonWorkerFactory(pythonExec: String, envVars: Map[String
           self.synchronized {
             simpleWorkers.put(socket, worker)
           }
-          logInfo(s"Thread ${Thread.currentThread().getId}: creating simple worker finished")
+          logWarning(s"Thread ${Thread.currentThread().getId}: creating simple worker finished")
           return socket
         } catch {
           case e: Exception =>
             if (retry >= maxRetry) {
-              throw new SparkException(s"Python worker failed to connect back ${maxRetry}", e)
+              throw new SparkException(s"Python worker failed to connect back ${maxRetry} times", e)
             } else {
               retry += 1
               logWarning(s"Python worker failed to connect back ${retry}" +

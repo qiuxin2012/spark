@@ -685,6 +685,8 @@ if __name__ == '__main__':
             write_int(SpecialLengths.FINISHED, sock_file)
             sock_file.flush()
         except Exception as e:
-            print("Python worker.py got exception \n")
+            print("Python worker.py got exception." + str(datetime.now()) + "\n")
             traceback.print_exception(*sys.exc_info())
+            write_int(SpecialLengths.PYTHON_EXCEPTION_THROWN, sock_file)
+            sock_file.flush()
             retry += 1

@@ -62,7 +62,7 @@ def launch_gateway(conf=None, popen_kwargs=None):
         on_windows = platform.system() == "Windows"
         #script = "./bin/spark-submit.cmd" if on_windows else "./bin/spark-submit"
         #command = [os.path.join(SPARK_HOME, script)]
-        j_classpath = str(SPARK_HOME) + '/conf/:' + str(SPARK_HOME) + '/jars/*'
+        j_classpath = str(SPARK_HOME) + '/jars/*'
         java_path = 'java' if os.getenv('JAVA_HOME') is None else os.getenv('JAVA_HOME') + '/bin/java'
         command = [java_path, '-cp', j_classpath, '-Xmx2g', 'org.apache.spark.deploy.SparkSubmit']
 
@@ -217,11 +217,12 @@ def local_connect_and_auth(port, auth_secret):
             sockfile = sock.makefile("rwb", int(os.environ.get("SPARK_BUFFER_SIZE", 65536)))
             _do_server_auth(sockfile, auth_secret)
             return (sockfile, sock)
-        except socket.error as e:
+        except Exception as e:
             emsg = str(e)
             errors.append("tried to connect to %s, but an error occurred: %s" % (sa, emsg))
-            sock.close()
-            sock = None
+            if sock is not None:
+                sock.close()
+                sock = None
     raise Exception("could not open socket: %s" % errors)
 
 
